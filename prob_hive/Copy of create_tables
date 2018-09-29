@@ -1,0 +1,35 @@
+CREATE DATABASE ipl;
+USE ipl;
+create table b_by_b(batsmen STRING, bowler STRING, zero INT, one INT, two INT, three INT, four INT, six INT)  row format delimited fields terminated by '\,' stored as textfile;
+
+LOAD data LOCAL inpath '/home/shreyasi/Desktop/ipl/my_final.csv' into table b_by_b;
+
+create table bowl(bowler STRING, cluster_no INT, cluster_type INT)  row format delimited fields terminated by '\,' stored as textfile;
+
+LOAD data LOCAL inpath '/home/shreyasi/Desktop/ipl/bowl.csv' into table bowl;
+
+create table bat(cluster_no INT, batsmen STRING, cluster_type INT) row format delimited fields terminated by '\,' stored as textfile;
+
+LOAD data LOCAL inpath '/home/shreyasi/Desktop/ipl/bat.csv' into table bat;
+
+SELECT ba.cluster_no, b.bowler, b.zero, b.one, b.two, b.three, b.four, b.six
+FROM b_by_b b JOIN bat ba 
+ON (b.batsmen = ba.batsmen)
+
+create table b_by_b1(batsmen_cluster INT, bowler STRING, zero INT, one INT, two INT, three INT, four INT, six INT)  row format delimited fields terminated by '\,' stored as textfile;
+
+INSERT OVERWRITE TABLE b_by_b1 SELECT ba.cluster_no, b.bowler, b.zero, b.one, b.two, b.three, b.four, b.six
+FROM b_by_b b JOIN bat ba 
+ON (b.batsmen = ba.batsmen)
+
+SELECT b.batsmen_cluster, ba.cluster_no, b.zero, b.one, b.two, b.three, b.four, b.six
+FROM b_by_b1 b JOIN bowl ba 
+ON (b.bowler = ba.bowler)
+
+create table b_by_b_final(batsmen_cluster INT, bowler_cluster INT, zero INT, one INT, two INT, three INT, four INT, six INT)  row format delimited fields terminated by '\,' stored as textfile;
+
+INSERT OVERWRITE TABLE b_by_b_final SELECT b.batsmen_cluster, ba.cluster_no, b.zero, b.one, b.two, b.three, b.four, b.six
+FROM b_by_b1 b JOIN bowl ba 
+ON (b.bowler = ba.bowler)
+
+

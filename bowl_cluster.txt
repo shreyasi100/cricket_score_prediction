@@ -1,0 +1,63 @@
+import org.apache.spark.mllib.linalg.Vectors
+
+import org.apache.spark.mllib.clustering.KMeans
+
+import org.apache.spark.sql.functions._
+
+// load file and remove header
+
+val data = sc.textFile("PF_bat.csv")
+
+val header = data.first
+
+val rows = data.filter(l => l != header)
+
+// define case class
+
+case class CC1(Player: String, Span: String, Mat: Int, Inns: Int, NO: Int, Runs: Int, HS: Int, Ave: Double, BF: Int, SR: Double, hundreds:Int, fiftys:Int, zeros:Int, fours:Int, sixes:Int)
+
+// comma separator split
+
+val allSplit = rows.map(line => line.split(","))
+
+// map parts to case class
+
+val allData = allSplit.map( p => CC1( p(0).toString, p(1).toString, p(2).trim.toInt, p(3).trim.toInt, p(4).trim.toInt, p(5).trim.toInt, p(6).trim.toInt, p(7).trim.toDouble, p(8).trim.toInt, p(9).trim.toDouble, p(10).trim.toInt, p(11).trim.toInt, p(12).trim.toInt, p(13).trim.toInt, p(14).trim.toInt))
+
+// convert rdd to dataframe
+
+val allDF = allData.toDF()
+
+// convert back to rdd and cache the data
+
+val rowsRDD = allDF.rdd.map(r => (r.getString(0), r.getString(1), r.getInt(2), r.getInt(3), r.getInt(4), r.getInt(5), r.getInt(6), r.getDouble(7), r.getInt(8), r.getDouble(9), r.getInt(10), r.getInt(11), r.getInt(12), r.getInt(13), r.getInt(14)))
+
+rowsRDD.cache()
+
+// convert data to RDD which will be passed to KMeans and cache the data. We are passing in RSI2, RSI_CLOSE_3, PERCENT_RANK_100, RSI_STREAK_2 and CRSI to KMeans. These are the attributes we want to use to assign the instance to a cluster
+
+val vectors = allDF.rdd.map(r => Vectors.dense( r.getInt(6), r.getDouble(7), r.getInt(8), r.getDouble(9), r.getInt(10), r.getInt(11), r.getInt(12), r.getInt(13), r.getInt(14) ))
+
+vectors.cache()
+
+//KMeans model with 21 clusters and 20 iterations
+
+val kMeansModel = KMeans.train(vectors, 21, 20)
+
+//Print the center of each cluster
+
+kMeansModel.clusterCenters.foreach(println)
+
+// Get the prediction from the model with the ID so we can link them back to other information
+
+val predictions = rowsRDD.map{r => (r._1, kMeansModel.predict(Vectors.dense(r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15) ))}
+
+// convert the rdd to a dataframe
+
+val predDF = predictions.toDF("Player", "CLUSTER")
+
+predDF.show()
+val t = allDF.join(predDF, "Player")
+t.filter("CLUSTER = 1").describe().show()
+
+t.write.format("com.databricks.spark.csv").option("header","true").save("clustering.csv")

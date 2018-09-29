@@ -1,0 +1,10 @@
+put 'prob2', '1', 'id:id', '1', 
+put 'prob2', '1', 'bat_cluster:bat_cluster', '0'
+put 'prob2', '1', bowl_clutser:bowl_cluster', '0'
+put 'prob2', '1', zero:zero', '0.3581213307', 
+put 'prob2', '1', one:one', '0.4246575342', 
+put 'prob2', '1', 'two:two', '0.0626223092', 
+put 'prob2', '1','three:three', '0.0039138943', 
+put 'prob2', '1','four:four', '0.1135029354', 
+put 'prob2', '1','six:six', '0.0352250489', 
+put 'prob2', '1','no_of_bowlers: no_of_bowlers', '511'

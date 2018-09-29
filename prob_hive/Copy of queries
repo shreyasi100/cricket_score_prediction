@@ -1,0 +1,4 @@
+select batsmen_cluster, sum(zeros)
+from b_by_b_final
+group by batsmen_cluster 
+where bowler_cluster=0;
